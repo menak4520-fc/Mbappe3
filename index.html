@@ -10,9 +10,14 @@
         h1 { color: #38bdf8; margin-bottom: 15px; font-size: 2rem; }
         
         /* شريط الإحصائيات */
-        .stats-bar { background: #1c2541; padding: 15px; border-radius: 12px; display: flex; justify-content: space-around; margin-bottom: 20px; font-weight: bold; border: 1px solid #3a506b; }
+        .stats-bar { background: #1c2541; padding: 15px; border-radius: 12px; display: flex; justify-content: space-around; margin-bottom: 20px; font-weight: bold; border: 1px solid #3a506b; flex-wrap: wrap; gap: 10px; }
         .coins { color: #facc15; font-size: 1.2rem; }
         .ovr { color: #4ade80; font-size: 1.2rem; }
+
+        /* التحكم بالتكتيك والمباريات */
+        .controls-container { display: flex; gap: 10px; justify-content: center; margin-bottom: 15px; flex-wrap: wrap; }
+        .match-btn { background: #10b981 !important; font-size: 1rem !important; padding: 10px 20px !important; }
+        .match-btn:hover { background: #059669 !important; }
 
         /* الفلتر وسوق المزادات */
         .filter-container { margin: 15px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
@@ -48,7 +53,17 @@
     
     <div class="stats-bar">
         <div>الـ OVR الإجمالي: <span id="team-ovr" class="ovr">0</span></div>
+        <div>الخطّة: <span id="active-formation-display" style="color: #38bdf8;">4-3-3</span></div>
         <div>الكوينز: <span id="user-coins" class="coins">5,000,000</span> 🪙</div>
+    </div>
+
+    <div class="controls-container">
+        <select id="formation-select" onchange="changeFormation(this.value)">
+            <option value="4-3-3">الخطة: 4-3-3</option>
+            <option value="4-4-2">الخطة: 4-4-2</option>
+            <option value="3-5-2">الخطة: 3-5-2</option>
+        </select>
+        <button class="match-btn" onclick="playMatch()">⚽ لعب مباراة (Match Simulator)</button>
     </div>
 
     <h2 class="section-title">⚽ تشكيلتك الحالية (Squad Builder)</h2>
@@ -59,8 +74,8 @@
     <h2 class="section-title">🛒 سوق المزادات (Auction Market)</h2>
     
     <div class="filter-container">
-        <input type="text" id="search-input" placeholder="ابحث عن لاعب..." oninput="filterMarket()">
-        <select id="pos-filter" onchange="filterMarket()">
+        <input type="text" id="search-input" placeholder="ابحث عن لاعب..." oninput="renderMarket()">
+        <select id="pos-filter" onchange="renderMarket()">
             <option value="ALL">كل المراكز</option>
             <option value="GK">GK</option>
             <option value="CB">CB</option>
@@ -80,84 +95,7 @@
     <!-- 1. استدعاء قاعدة البيانات أولاً -->
     <script src="js/players.js"></script>
 
-    <!-- 2. كود التحكم في اللعبة -->
-    <script>
-        let userCoins = 5000000;
-        let mySquad = [];
-        let availableMarket = [...playersDatabase];
-
-        function renderMarket(playersList) {
-            const marketEl = document.getElementById('market');
-            marketEl.innerHTML = '';
-            
-            playersList.forEach(p => {
-                marketEl.innerHTML += `
-                    <div class="card ${p.category}">
-                        <div class="card-ovr">${p.ovr}</div>
-                        <span class="card-pos">${p.pos}</span>
-                        <div class="card-name">${p.name}</div>
-                        <div class="card-price">${p.price.toLocaleString()} 🪙</div>
-                        <button onclick="buyPlayer(${p.id})">شراء</button>
-                    </div>
-                `;
-            });
-        }
-
-        function filterMarket() {
-            const searchText = document.getElementById('search-input').value.toLowerCase();
-            const selectedPos = document.getElementById('pos-filter').value;
-
-            const filtered = availableMarket.filter(p => {
-                const matchesName = p.name.toLowerCase().includes(searchText);
-                const matchesPos = selectedPos === 'ALL' || p.pos === selectedPos;
-                return matchesName && matchesPos;
-            });
-
-            renderMarket(filtered);
-        }
-
-        function buyPlayer(id) {
-            const index = availableMarket.findIndex(p => p.id === id);
-            const player = availableMarket[index];
-
-            if (userCoins >= player.price) {
-                userCoins -= player.price;
-                mySquad.push(player);
-                availableMarket.splice(index, 1);
-                updateUI();
-            } else {
-                alert("الكوينز غير كافية!");
-            }
-        }
-
-        function updateUI() {
-            document.getElementById('user-coins').innerText = userCoins.toLocaleString();
-            
-            const squadEl = document.getElementById('squad');
-            squadEl.innerHTML = '';
-            
-            if (mySquad.length === 0) {
-                squadEl.innerHTML = `<p style="color: #cbd5e1;">التشكيلة فارغة! قم بشراء لاعبين من سوق المزادات بالأسفل.</p>`;
-            } else {
-                mySquad.forEach(p => {
-                    squadEl.innerHTML += `
-                        <div class="card ${p.category}">
-                            <div class="card-ovr">${p.ovr}</div>
-                            <span class="card-pos">${p.pos}</span>
-                            <div class="card-name">${p.name}</div>
-                        </div>
-                    `;
-                });
-            }
-
-            const totalOvr = mySquad.length > 0 ? Math.round(mySquad.reduce((acc, p) => acc + p.ovr, 0) / mySquad.length) : 0;
-            document.getElementById('team-ovr').innerText = totalOvr;
-
-            filterMarket();
-        }
-
-        // تشغيل السوق أول مرة
-        filterMarket();
-    </script>
+    <!-- 2. ملف التحكم الرئيسي -->
+    <script src="js/ultimate_team.js"></script>
 </body>
 </html>
